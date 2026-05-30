@@ -1,5 +1,5 @@
 const express = require('express');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const dotenv = require('dotenv');
 const cors = require('cors');
 dotenv.config();
@@ -38,11 +38,17 @@ async function run() {
             const cursor= facilitiesCollection.find();
             const result = await cursor.toArray();
             res.send(result);
-            console.log(result);
+        });
 
-        })
+           app.get("/facilities/:id", async (req, res)=>{
+            const {id}=req.params;
+            const query = { _id: new ObjectId(id)};
+            const result= await facilitiesCollection.findOne(query);
+            res.send(result);
+            console.log(id)
+        });
 
-
+      
 
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
