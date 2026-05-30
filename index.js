@@ -48,7 +48,11 @@ async function run() {
             console.log(id)
         });
 
-      
+        app.get("/featured", async(req,res)=>{
+           const cursor= facilitiesCollection.find().limit(6);
+            const result = await cursor.toArray();
+            res.send(result)
+        });
 
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
