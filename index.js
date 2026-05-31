@@ -3,21 +3,17 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const dotenv = require('dotenv');
 const cors = require('cors');
 dotenv.config();
+
 const app = express();
-app.use(cors());
-
-
 const port = process.env.PORT || 5000;
 
 
+app.use(cors());
+app.use(express.json()); 
+
+const uri = process.env.MONGODB_URI;
 
 
-
-
-
-const uri = "mongodb+srv://sportnest:ZWarFlfJVCwEE7Dv@cluster0.kkzn7mn.mongodb.net/?appName=Cluster0";
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -28,54 +24,76 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
-    // await client.connect();
-    // Send a ping to confirm a successful connection
-    // await client.db("admin").command({ ping: 1 });
-    const db= client.db("sportnest");
-    const facilitiesCollection= db.collection("facilities");
-        app.get("/facilities", async (req, res)=>{
-            const cursor= facilitiesCollection.find();
-            const result = await cursor.toArray();
-            res.send(result);
-        });
+    
+    await client.connect();
+    
+    const db = client.db("sportnest");
+    const facilitiesCollection = db.collection("facilities");
+    const bookingCollection = db.collection("booking");
 
-           app.get("/facilities/:id", async (req, res)=>{
-            const {id}=req.params;
-            const query = { _id: new ObjectId(id)};
-            const result= await facilitiesCollection.findOne(query);
-            res.send(result);
-            console.log(id)
-        });
+   
+    app.get("/facilities", async (req, res) => {
+      try {
+        const cursor = facilitiesCollection.find();
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
 
-        app.get("/featured", async(req,res)=>{
-           const cursor= facilitiesCollection.find().limit(6);
-            const result = await cursor.toArray();
-            res.send(result)
-        });
+    
+    app.get("/facilities/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+       
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid ID format" });
+        }
+        const query = { _id: new ObjectId(id) };
+        const result = await facilitiesCollection.findOne(query);
+        
+        if (!result) {
+          return res.status(404).send({ message: "Facility not found" });
+        }
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
 
+
+    app.post("/booking", async(req,res)=>{
+      const bookingData = req.body;
+      const result = await bookingCollection.insertOne(bookingData);
+      res.json(result);
+    });
+
+
+
+   
+    app.get("/featured", async (req, res) => {
+      try {
+        const cursor = facilitiesCollection.find().limit(6);
+        const result = await cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+  } catch (error) {
+    console.error("Database connection error:", error);
   }
 }
 run().catch(console.dir);
 
 
-
-
-
-
-
-
-
-
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('SportNest Server is Running!')
 })
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
+  console.log(`SportNest app listening on port ${port}`)
 })
