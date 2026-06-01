@@ -89,8 +89,6 @@ async function run() {
     app.get("/booking/:email", async (req, res) => {
       try {
         const { email } = req.params;
-        
-      
         const query = { userEmail: email }; 
         const result = await bookingCollection.find(query).toArray();
         res.json(result);
@@ -110,39 +108,38 @@ async function run() {
       }
     });
 
-  
-app.patch("/booking/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
- 
-    const { bookingDate, timeSlot, hours, totalPrice } = req.body;
+    // 5. update booking
+    app.patch("/booking/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { bookingDate, timeSlot, hours, totalPrice } = req.body;
 
-    if (!ObjectId.isValid(id)) {
-      return res.status(400).send({ message: "Invalid Booking ID format" });
-    }
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid Booking ID format" });
+        }
 
-    const filter = { _id: new ObjectId(id) };
-    const updatedDoc = {
-      $set: {
-        bookingDate,
-        timeSlot,
-        hours: Number(hours),
-        totalPrice: Number(totalPrice),
-      },
-    };
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            bookingDate,
+            timeSlot,
+            hours: Number(hours),
+            totalPrice: Number(totalPrice),
+          },
+        };
 
-    const result = await bookingCollection.updateOne(filter, updatedDoc);
-    
-    if (result.modifiedCount === 0) {
-      return res.status(400).json({ message: "No changes were made or booking not found" });
-    }
+        const result = await bookingCollection.updateOne(filter, updatedDoc);
+        
+        if (result.modifiedCount === 0) {
+          return res.status(400).json({ message: "No changes were made or booking not found" });
+        }
 
-    res.json(result);
-  } catch (error) {
-    console.error("Backend update error:", error);
-    res.status(500).send({ message: "Failed to update booking", error: error.message });
-  }
-});
+        res.json(result);
+      } catch (error) {
+        console.error("Backend update error:", error);
+        res.status(500).send({ message: "Failed to update booking", error: error.message });
+      }
+    });
 
     // 6. delete booking 
     app.delete("/booking/:id", async (req, res) => {
@@ -169,6 +166,74 @@ app.patch("/booking/:id", async (req, res) => {
         res.send(result);
       } catch (error) {
         res.status(500).send({ message: "Internal Server Error", error });
+      }
+    });
+
+    // 8. new facility add API 
+    app.post("/facilities", async (req, res) => {
+      try {
+        const facilityData = req.body;
+        const result = await facilitiesCollection.insertOne(facilityData);
+        res.status(201).json(result);
+      } catch (error) {
+        console.error("Failed to add facility:", error);
+        res.status(500).send({ message: "Failed to create facility listing", error: error.message });
+      }
+    });
+
+    // 9-manage facilities owner data find
+    app.get("/owner-facilities/:email", async (req, res) => {
+      try {
+        const { email } = req.params;
+        const query = { ownerEmail: email };
+        const result = await facilitiesCollection.find(query).toArray();
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to fetch owner facilities", error: error.message });
+      }
+    });
+
+    // 10. added facility update API (PATCH)
+    app.patch("/facilities/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+        const { name, location, price_per_hour, image } = req.body;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid Facility ID format" });
+        }
+
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            name,
+            location,
+            price_per_hour: Number(price_per_hour),
+            image, 
+          },
+        };
+
+        const result = await facilitiesCollection.updateOne(filter, updatedDoc);
+        res.json(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to update facility", error: error.message });
+      }
+    });
+
+    // 11. added facility delete API (DELETE)
+    app.delete("/facilities/:id", async (req, res) => {
+      try {
+        const { id } = req.params;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ message: "Invalid Facility ID format" });
+        }
+
+        const query = { _id: new ObjectId(id) };
+        const result = await facilitiesCollection.deleteOne(query);
+        res.json(result);
+      } catch (error) {
+        res.status(500).send({ message: "Failed to delete facility", error: error.message });
       }
     });
 
