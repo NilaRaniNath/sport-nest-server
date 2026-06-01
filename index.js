@@ -55,15 +55,38 @@ async function run() {
     const bookingCollection = db.collection("booking");
 
     // 1. all facilities
-    app.get("/facilities", async (req, res) => {
-      try {
-        const cursor = facilitiesCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
-      } catch (error) {
-        res.status(500).send({ message: "Internal Server Error", error });
-      }
-    });
+    app.get("/facilities", logger, async (req, res) => {
+  try {
+    
+    const { search, sportType } = req.query; 
+    let query = {};
+
+    
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { facility_type: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    
+    if (sportType) {
+      
+      query.facility_type = { $regex: `${sportType}`, $options: 'i' };
+    }
+
+    
+    console.log("MongoDB Query Object:", JSON.stringify(query));
+
+    const cursor = facilitiesCollection.find(query);
+    const result = await cursor.toArray();
+    
+    res.send(result);
+  } catch (error) {
+    console.error("Error fetching facilities:", error);
+    res.status(500).send({ message: "Internal Server Error" });
+  }
+});
 
     // ২. single facility api
     app.get("/facilities/:id", logger, verifyToken, async (req, res) => {
@@ -98,7 +121,7 @@ async function run() {
     });
 
     // 4. new booking
-    app.post("/booking", async (req, res) => {
+    app.post("/booking",logger,verifyToken, async (req, res) => {
       try {
         const bookingData = req.body;
         const result = await bookingCollection.insertOne(bookingData);
@@ -109,7 +132,7 @@ async function run() {
     });
 
     // 5. update booking
-    app.patch("/booking/:id", async (req, res) => {
+    app.patch("/booking/:id",logger,verifyToken, async (req, res) => {
       try {
         const { id } = req.params;
         const { bookingDate, timeSlot, hours, totalPrice } = req.body;
@@ -142,7 +165,7 @@ async function run() {
     });
 
     // 6. delete booking 
-    app.delete("/booking/:id", async (req, res) => {
+    app.delete("/booking/:id",logger,verifyToken, async (req, res) => {
       try {
         const { id } = req.params;
 
@@ -170,7 +193,7 @@ async function run() {
     });
 
     // 8. new facility add API 
-    app.post("/facilities", async (req, res) => {
+    app.post("/facilities",logger,verifyToken, async (req, res) => {
       try {
         const facilityData = req.body;
         const result = await facilitiesCollection.insertOne(facilityData);
@@ -194,7 +217,7 @@ async function run() {
     });
 
     // 10. added facility update API (PATCH)
-    app.patch("/facilities/:id", async (req, res) => {
+    app.patch("/facilities/:id",logger,verifyToken, async (req, res) => {
       try {
         const { id } = req.params;
         const { name, location, price_per_hour, image } = req.body;
@@ -221,7 +244,7 @@ async function run() {
     });
 
     // 11. added facility delete API (DELETE)
-    app.delete("/facilities/:id", async (req, res) => {
+    app.delete("/facilities/:id",logger,verifyToken, async (req, res) => {
       try {
         const { id } = req.params;
 
