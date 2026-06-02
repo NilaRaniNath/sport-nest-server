@@ -220,7 +220,7 @@ async function run() {
     app.patch("/facilities/:id",logger,verifyToken, async (req, res) => {
       try {
         const { id } = req.params;
-        const { name, location, price_per_hour, image } = req.body;
+        const { name,facility_type, location, price_per_hour, image } = req.body;
 
         if (!ObjectId.isValid(id)) {
           return res.status(400).send({ message: "Invalid Facility ID format" });
@@ -230,6 +230,7 @@ async function run() {
         const updatedDoc = {
           $set: {
             name,
+            facility_type,
             location,
             price_per_hour: Number(price_per_hour),
             image, 
