@@ -28,7 +28,7 @@ const uri = process.env.MONGODB_URI;
 
 
 
-const JWKS = createRemoteJWKSet(new URL(`${process.env.BETTER_AUTH_URL|| 'http://localhost:3000'}/api/auth/jwks`));
+const JWKS = createRemoteJWKSet(new URL(`${process.env.BETTER_AUTH_URL}/api/auth/jwks`));
 
 
 
